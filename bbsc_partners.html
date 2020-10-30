@@ -202,6 +202,14 @@ $(document).ready(function () {
 						// This row is already open - close it
 						row.child.hide();
 						tr.removeClass('shown');
+						//lookup marker in global marker array by nid. Then use the leaflet_id to open the popup. 
+						var target = clusterGroup.getLayer(objMarkers[row.data().nid]._leaflet_id)
+							
+						clusterGroup.zoomToShowLayer(target, function() {
+							target.closePopup();
+							zoomToData();
+						});
+
 						
 						//search();
 					}
@@ -575,11 +583,11 @@ function format(d) {
 	clusterGroup.zoomToShowLayer(target, function() {
     	target.openPopup();
   	})
-	objMarkers[d.nid].openPopup();
+	
 	return strReturnString
 }
 
-	function search(blnZoomToResults = true) {
+	function search() {
 		// get the value of the search input field
 		
 		var statusString = $('#status_select').val();
