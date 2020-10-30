@@ -27,23 +27,12 @@
 //setup Column locations according to the datatable defined columns (not .csv - this can get confusing if your ordering for datatable display differs from the ordering in the .csv), index starts at 0
 var objColumn = {
 	"sector": 2,
-	"content_type": 4 
+	"content_type": 4,
+	"nid":13
 };
-
-/* Formatting function for row details - modify as you need */
-function format(d) {
-	var strReturnString = '<p class="dt_details">No further information provided.</p>';
-
-	if(d.content != null){
-		strReturnString = '<h4>Description:</h4>' + 
-			'<p class="dt_details">' + d.content + '</p>';
-	}
-	
-	strReturnString += '<br/><a href="../node/' + d.nid + '">View full profile</a>';
+var objMarkers = [];
 
 
-	return strReturnString
-}
 
 function formatCurrency(total) {
 	var formattedTotal = '';
@@ -60,7 +49,7 @@ function shorten(str, maxLen, separator = ' ') {
 $(document).ready(function () {
 
 	//var dataFilePath = 'bbsc-partner-json_20201001.csv';
-	var jsonRaw = 'bbsc-partner-json_20201008.json';
+	var jsonRaw = 'bbsc-partner-json_20201026.json';
 	//var jsonRaw = 'https://www6.eere.energy.gov/bbsc/bbsc-partner-json';
 	$.getJSON(jsonRaw, function (data) {
 	
@@ -91,7 +80,20 @@ $(document).ready(function () {
 				},
 				{
 					"data": null, render: function (data, type, row) {
-						return '<a href="../node/' + data.nid + '"  target="_parent">' + data.title + '</a>';
+						var strPTitle = '';
+						switch (data.content_type) {
+							case 'Partner Profile':
+								strPTitle = '<a href="../node/' + data.nid + '"  target="_parent">' + data.title + '</a>';
+								break;
+							case 'Showcase Project':
+								strPTitle = data.sp_partner + '<br/><a href="../node/' + data.nid + '"  target="_parent">' + data.title + '</a>';
+								break;
+							default:
+								strPTitle = '';
+								break;
+						}
+
+						return strPTitle;
 					}
 				},
 				{ "data": "sector" },
@@ -103,17 +105,19 @@ $(document).ready(function () {
 					"data": null, render: function (data, type, row) {
 						strLogo = '';
 						(data.feature_image != null ? 
-						strLogo = '<img style="max-width:100px" src="' + data.feature_image + '">' : '');
+						strLogo = '<img style="max-width:100px" src="' + data.feature_image + '"/>' : '');
 						(data.logo_source != null ? 
-						strLogo = '<img style="max-width:100px" src="' + data.logo_source + '">' : '');
+						strLogo = '<img style="max-width:100px" src="' + data.logo_source + '"/>' : '');
 						return strLogo;
 						
 					}
 				},
-				
 				{ "data": "latitude" },
 				{ "data": "longitude" },
 				{ "data": "content" },
+				{ "data": "summary" },
+				{ "data": "sp_partner" },
+				{ "data": "nid" },
 			],
 			"columnDefs": [
 				{
@@ -161,7 +165,22 @@ $(document).ready(function () {
 					"targets": [10],
 					"title": "content",
 					"visible": false	
-				}
+				},
+				{
+					"targets": [11],
+					"title": "summary",
+					"visible": false	
+				},
+				{
+					"targets": [12],
+					"title": "sp_partner",
+					"visible": false	
+				},
+				{
+					"targets": [13],
+					"title": "nid",
+					"visible": false	
+				},
 				
 			],
 			"createdRow": function (row, data, index) {
@@ -183,6 +202,8 @@ $(document).ready(function () {
 						// This row is already open - close it
 						row.child.hide();
 						tr.removeClass('shown');
+						
+						//search();
 					}
 					else {
 						// Open this row
@@ -285,20 +306,20 @@ $(document).ready(function () {
 			$('#projects-datatable').DataTable().search('').columns().search('').draw();
 			$("#program_div [type='checkbox']").prop('checked', true);
 			$('#status_select').val('-99');
-			search('status_select');
+			search();
 			
 			filter_dt_column($('#projects-datatable').DataTable(), objColumn['sector'], '#program_div');
 			search_dt_column($('#projects-datatable').DataTable(), objColumn['content_type'], "#status_select");
 			$('#projects-datatable_filter').find('input').val('');
 			$('#projects-datatable').DataTable().search('').columns().search('').draw();
-			search('');
+			search();
 			map.setView([40, -97], 4);
 		};
 		var zoomToData = function () {
 			map.fitBounds(clusterGroup.getBounds(), { padding: [45, 45] });
 		}
 		$("#btnReset").click(zoomToData);
-		$("#lnkDownload").click(downloadAction);
+		//$("#lnkDownload").click(downloadAction);
 		
 		//console.log(data);
 		//couldn't find easy way to convert json to geojson. So converted json to csv, then back to geojson
@@ -321,15 +342,7 @@ $(document).ready(function () {
 			//featureLayer.addTo(map);
 		map.featureLayer.on('ready', function () {
 		});
-		//mapOverlayHawaii.featureLayer.on('ready', function () {
-		//    //add the initial data (all of it) to the map.
-		//    customPopup(readyLayer);
-
-		//    //use this for clustering
-		//    mapOverlayHawaii.addLayer(clusterGroup2);
-
-		//    //featureLayer.addTo(mapOverlayHawaii);
-		//});
+		
 		
 		function setupDataControls() {
 
@@ -347,7 +360,7 @@ $(document).ready(function () {
 			for (var k in typesObj) types.push(k);
 
 			types.sort();
-
+			
 			// swap 2nd element with last element 
 			//Array.prototype.move = function (from, to) {
 			//	this.splice(to, 0, this.splice(from, 1)[0]);
@@ -362,6 +375,8 @@ $(document).ready(function () {
 				// Create an an input checkbox and label inside.
 				var item = program_filter.appendChild(document.createElement('div'));
 				item.setAttribute('class', 'checkbox');
+				//hide Water Initaitive and Utility
+				if (types[i] == "Water Initiative" || types[i] == "Utility") item.setAttribute('class', 'hidden');
 				var checkbox = item.appendChild(document.createElement('input'));
 				var colorCode = item.appendChild(document.createElement('div'));
 				var label = item.appendChild(document.createElement('label'));
@@ -378,7 +393,7 @@ $(document).ready(function () {
 
 				// Whenever a person clicks on this checkbox, call the update().
 				checkbox.addEventListener('change', function () {
-					search('checkbox1');
+					search();
 					search_dt_column($('#projects-datatable').DataTable(), objColumn['content_type'], '#status_select');
 					filter_dt_column($('#projects-datatable').DataTable(), objColumn['sector'], '#program_div');
 					
@@ -388,21 +403,15 @@ $(document).ready(function () {
 			}
 
 			status_select.addEventListener('change', function () {
-				search('status_select');
-				var val = $(this).val()
-				if (val == '-99') {
-					//$('#projects-datatable').DataTable().search('').columns().search('').draw();
-					search_dt_column($('#projects-datatable').DataTable(), objColumn['content_type'], '#status_select');
-					filter_dt_column($('#projects-datatable').DataTable(), objColumn['sector'], '#program_div');
-				}
-				else {
-					filter_dt_column($('#projects-datatable').DataTable(), objColumn['sector'], '#program_div');
-					search_dt_column($('#projects-datatable').DataTable(), objColumn['content_type'], '#status_select');
-					map.fitBounds(clusterGroup.getBounds(), { padding: [45, 45] });
-				}
+				search();
+				
+				filter_dt_column($('#projects-datatable').DataTable(), objColumn['sector'], '#program_div');
+				search_dt_column($('#projects-datatable').DataTable(), objColumn['content_type'], '#status_select');
+				map.fitBounds(clusterGroup.getBounds(), { padding: [45, 45] });
+				
 			});
 
-			search('status_select');
+			search();
 		}
 
 		function customPopup(markersLayer) {
@@ -414,7 +423,11 @@ $(document).ready(function () {
 					citystate = '';
 				}
 
-				var linkProject_Title = '<a href="../node/' + layer.feature.properties.nid + '" target="_blank">' + layer.feature.properties.title + '<\/a>';
+				var linkProject_Title = '';
+				if (layer.feature.properties.content_type == 'Showcase Project'){
+					linkProject_Title =  layer.feature.properties.sp_partner + '<br/>';
+				}
+				linkProject_Title += '<a href="../node/' + layer.feature.properties.nid + '" target="_blank">' + layer.feature.properties.title + '<\/a>';
 				
 				var strSector = layer.feature.properties.sector;
 				
@@ -435,9 +448,21 @@ $(document).ready(function () {
 					strLogo = layer.feature.properties.logo_source;
 		
 				var strDescription = '';
-				if (layer.feature.properties.content != ''){
-					strDescription = shorten(layer.feature.properties.content,350);
-					strDescription = strDescription + '... ';
+				switch (strContentType) {
+					case 'Partner Profile':
+						if (layer.feature.properties.content != ''){
+							strDescription = shorten(layer.feature.properties.content,350);
+							strDescription += '... ';
+						}
+						break;
+					case 'Showcase Project':
+						if (layer.feature.properties.summary != ''){
+							strDescription = layer.feature.properties.summary;
+						}
+						break;
+					default:
+						strDescription = '';
+						break;
 				}
 		
 				
@@ -460,15 +485,24 @@ $(document).ready(function () {
 					'marker-symbol': projectTypeAttributes[project_type].icon
 				}));
 
-				//assign Click event
-				layer.on('click', function (e) {
-					//$('#info_div').html(content);
+				//assign events for popup open/close
+				layer.on('popupopen', function (e) {
+					search_nid_column($('#projects-datatable').DataTable(), objColumn['nid'],layer.feature.properties.nid);
 				});
 
-				//if (layer.feature.properties.State != 'HI')
-					clusterGroup.addLayer(layer);
-				//else
-				//    clusterGroup2.addLayer(layer);
+				layer.on('popupclose', function (e) {
+					$('#projects-datatable').DataTable().column(objColumn['nid']).search('',false,false,false).draw();
+					filter_dt_column($('#projects-datatable').DataTable(), objColumn['sector'], '#program_div');
+					search_dt_column($('#projects-datatable').DataTable(), objColumn['content_type'], '#status_select');
+					
+				});
+
+				//add marker to a global array indexed by nid
+				objMarkers[layer.feature.properties.nid] = layer;
+				
+				
+				clusterGroup.addLayer(layer);
+				
 			});
 
 		}
@@ -509,8 +543,43 @@ $(document).ready(function () {
 		return match;
 	}
 
-	var markers = [];
-	function search(strFilterName) {
+
+	/* Formatting function for row details - modify as you need */
+function format(d) {
+	var strReturnString = '<p class="dt_details">No further information provided.</p>';
+
+	switch (d.content_type) {
+			case 'Partner Profile':
+				if(d.content != null){
+					strReturnString = '<h4>Description:</h4>' + 
+						'<p class="dt_details">' + d.content + '</p>';
+				}
+				break;
+			case 'Showcase Project':
+				if(d.summary != null){
+				strReturnString = '<h4>Description:</h4>' + 
+					'<p class="dt_details">' + d.summary + '</p>';
+				}
+				break;
+			default:
+				break;
+		}
+
+	
+	
+	strReturnString += '<br/><a href="../node/' + d.nid + '">View more details</a>';
+	
+	//lookup marker in global marker array by nid. Then use the leaflet_id to open the popup. 
+	var target = clusterGroup.getLayer(objMarkers[d.nid]._leaflet_id)
+  		
+	clusterGroup.zoomToShowLayer(target, function() {
+    	target.openPopup();
+  	})
+	objMarkers[d.nid].openPopup();
+	return strReturnString
+}
+
+	function search(blnZoomToResults = true) {
 		// get the value of the search input field
 		
 		var statusString = $('#status_select').val();
@@ -533,7 +602,9 @@ $(document).ready(function () {
 					|| (feature.properties.content_type.toLowerCase().indexOf(searchString) !== -1) // filter by Content type
 					|| (feature.properties.content.toLowerCase().indexOf(searchString) !== -1) // filter by Project Description
 					|| (feature.properties.city.toLowerCase().indexOf(searchString) !== -1) // filter by City
-					|| (feature.properties.state.toLowerCase().indexOf(searchString) !== -1)) // filter by State
+					|| (feature.properties.state.toLowerCase().indexOf(searchString) !== -1) // filter by State
+					|| (feature.properties.sp_partner.toLowerCase().indexOf(searchString) !== -1) // filter by Partner for showcase projects
+					|| (feature.properties.summary.toLowerCase().indexOf(searchString) !== -1)) // filter by one sentence summary
 					&& (checkProgramTypes(feature.properties['sector']))
 					&& (checkStatus(feature.properties['content_type'])) );
 		}
@@ -662,12 +733,17 @@ function search_dt_column(dtable, col, cntrl) {
 	
 		//console.log('term: '+term);
 		if (term == '-99') {
-			dtable.search('').columns().search('').draw();
+			//dtable.search('').columns().search('').draw();
+			dtable.column(col).search('', false, false, false).draw();
 		}
 		else {
 			dtable.column(col).search(term, false, false, false).draw();
 		}
 	//}
+}
+
+function search_nid_column(dtable, col, nid) {
+	dtable.column(col).search("(^"+nid+"$)", true, false, false).draw();
 }
 
 function filter_dt_column(dtable, col, control) {
@@ -743,54 +819,9 @@ var projectTypeAttributes = {
 		size: 'small'
 	},
 	
-
-
-
-	// 'DOL - TAACCCT': {
-	// color:'#CC66CC', //pink
-	// desc:'<h4>Department of Labor -Trade Adjustment Assistance Community College and Career Training Program (TAACCCT)</h4>'+
-	// '<p>With nearly 2 Billion dollars distributed over 4 years, the TAACCCT program represents a significant investment in workforce training though federal investment. Through TAACCCT a large number of Energy and Manufacturing training programs have been created predominantly in the Nations community colleges.  TAACCCT has provided community colleges and other eligible institutions of higher education with funds to expand and improve their ability to deliver education and career training programs that can be completed in two years or less, are suited for workers who are eligible for training under the TAA for Workers program, and prepare program participants for employment in high-wage, high-skill occupations.</p>',
-	// icon:'',
-	// //legend_label:'TAACCCT',
-	// legend_label:'Trade Adjustment Assistance Community College and Career Training',
-	// size:'small'
-	// },
-	// 'DOE - WAP': {
-	// color: '#000066', //dkblue
-	// desc:'<h4>DOE Weatherization Assistance Program</h4>'+
-	// '<p>The U.S. Department of Energy (DOE) Weatherization Assistance Program provides grants to states, territories, and some Indian tribes to improve the energy efficiency of the homes of low-income families. These governments, in turn, contract with local governments and nonprofit agencies to provide weatherization services to those in need using the latest technologies for home energy upgrades.</p>',
-	// icon:'',
-	// legend_label:'Weatherization Assistance Program',
-	// //legend_label:'WAP',
-	// size:'small'
-	// },
-	// 'NNMI': {
-	// color: '#B22222', //red
-	// desc:'<h4>National Network for Manufacturing Innovation</h4>' +
-	// '<p>The National Network for Manufacturing Innovation (NNMI), consists of regional hubs that accelerate development and adoption of cutting-edge manufacturing technologies for making new, globally competitive products.</p>',
-	// icon:'industrial',
-	// //legend_label:'NNMI',
-	// legend_label:'National Network for Manufacturing Innovation',
-	// size:'large'
-	// },
-	// 'DOE - NIICE': {
-	// color: '#5E6A71', //grey
-	// desc:'<h4>DOE National Incubator Initiative for Clean Energy</h4>'+
-	// '<p>NIICE will support incubators across the country to help unleash the creative potential of America\'s entrepreneurs. Through these incubators, small businesses and entrepreneurs can receive important services to help successfully develop and commercialize clean energy technologies, including mentorship, business development, capital access, and manufacturing support.</p>',
-	// icon:'',
-	// //legend_label:'NIICE',
-	// legend_label:'National Incubator Initiative for Clean Energy',
-	// size:'small'
-	// },
-	// 'DOE - National Lab': {
-	// color: '#5D478B', //purple
-	// desc:'<h4>DOE National Laboratories</h4>'+
-	// '<p>The DOE laboratories comprise a preeminent federal research system, providing the Nation with strategic scientific and technological capabilities.</p> ',
-	// icon:'chemist',
-	// legend_label:'National Lab',
-	// size:'large'
-	// }
 };
+
+
 
 function setup_select_filter(strSelectID, strDivID, intCol, blnMulti) {
 
@@ -817,7 +848,7 @@ function setup_select_filter(strSelectID, strDivID, intCol, blnMulti) {
 								.search(strSelectedVals, true, false)
 								.draw();
 
-						search('checkbox1');
+						search();
 
 					});
 
@@ -870,7 +901,7 @@ function setup_select_filter(strSelectID, strDivID, intCol, blnMulti) {
 								.search(strSelectedVals, true, false)
 								.draw();
 
-						search('checkbox2');
+						search();
 					});
 			tmpLabel.append(chkBoxMarkup);
 			tmpLabel.append(' ' + val.trim());
