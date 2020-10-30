@@ -956,7 +956,7 @@ td.details-control {
 }
 
 tr.shown td.details-control {
-    background: url('//www1.eere.energy.gov/apps/images/dataTables_details_close.png') no-repeat center center;
+    background: url('//www1.eere.energy.gov/apps/images/dataTables_details_close.png') no-repeat center center !important;
 }
 
 /*-----------CUSTOM CSS for Energy.gov embedding--------------*/
