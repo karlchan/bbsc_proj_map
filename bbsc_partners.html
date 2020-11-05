@@ -459,7 +459,7 @@ $(document).ready(function () {
 				switch (strContentType) {
 					case 'Partner Profile':
 						if (layer.feature.properties.content != ''){
-							strDescription = shorten(layer.feature.properties.content,350);
+							strDescription = shorten(layer.feature.properties.content,300);
 							strDescription += '... ';
 						}
 						break;
@@ -559,13 +559,13 @@ function format(d) {
 	switch (d.content_type) {
 			case 'Partner Profile':
 				if(d.content != null){
-					strReturnString = '<h4>Description:</h4>' + 
+					strReturnString = '<strong>Description:</strong>' + 
 						'<p class="dt_details">' + d.content + '</p>';
 				}
 				break;
 			case 'Showcase Project':
 				if(d.summary != null){
-				strReturnString = '<h4>Description:</h4>' + 
+				strReturnString = '<strong>Description:</strong>' + 
 					'<p class="dt_details">' + d.summary + '</p>';
 				}
 				break;
