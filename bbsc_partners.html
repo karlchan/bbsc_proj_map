@@ -41,7 +41,7 @@ function formatCurrency(total) {
 	return '$'+formattedTotal.toString();
 }
 // Shorten a string to less than maxLen characters without truncating words.
-function shorten(str, maxLen, separator = ' ') {
+function shorten(str, maxLen, separator) {
   if (str.length <= maxLen) return str;
   return str.substr(0, str.lastIndexOf(separator, maxLen));
 }
@@ -459,7 +459,7 @@ $(document).ready(function () {
 				switch (strContentType) {
 					case 'Partner Profile':
 						if (layer.feature.properties.content != ''){
-							strDescription = shorten(layer.feature.properties.content,300);
+							strDescription = shorten(layer.feature.properties.content,300,' ');
 							strDescription += '... ';
 						}
 						break;
