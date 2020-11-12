@@ -294,10 +294,13 @@ $(document).ready(function () {
 
 		L.mapbox.accessToken = 'pk.eyJ1IjoiZW5lcmd5IiwiYSI6IkozTG9BZDQifQ.1WKh4U0kKCdknF3gxBOF7Q';
 		//mapbox streets default
-		var mapid = 'energy.nda103il';
+		
+		//var mapid = 'energy.nda103il'; //removed this was old classic tiles api, https://docs.mapbox.com/help/troubleshooting/migrate-legacy-static-tiles-api/
+		var mapid = '';
 		var map = L.mapbox.map('map', mapid,
 		{ maxZoom: 9, minZoom: 2, attributionControl: false, legendControl: { position: 'bottomright' } })
-		.setView([40, -97], 4);
+		.setView([40, -97], 4)
+		.addLayer(L.mapbox.styleLayer('mapbox://styles/energy/ckhc7eaqv0mjm19p3yr4jtlcw'));
 
 		var featureLayer = L.mapbox.featureLayer();
 
@@ -919,7 +922,7 @@ function setup_select_filter(strSelectID, strDivID, intCol, blnMulti) {
 }
 
 </script>
-
+<p>Use this map to view the location of Better Buildings partners and their Showcase Projects by sector. Selecting an item on the map filters the table below, and vice versa.</p>
 <div class="row">
     <div class="col-sm-4" id="facet_div">
 
