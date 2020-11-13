@@ -315,7 +315,7 @@ $(document).ready(function () {
 		var resetMap = function () {
 			$('#projects-datatable_filter').find('input').val('');
 			$('#projects-datatable').DataTable().search('').columns().search('').draw();
-			$("#program_div [type='checkbox']").prop('checked', true);
+			$("#program_div [type='checkbox']").prop('checked', true); //todo: reset button not quite working, need to select non-hidden items only.
 			$('#status_select').val('-99');
 			search();
 			
@@ -387,7 +387,7 @@ $(document).ready(function () {
 				var item = program_filter.appendChild(document.createElement('div'));
 				item.setAttribute('class', 'checkbox');
 				//hide Water Initaitive and Utility
-				if (types[i] == "Water Initiative" || types[i] == "Utility") item.setAttribute('class', 'hidden');
+				if (types[i] == "Water Initiative" || types[i] == "Utility" || types[i] == "Waste Reduction Pilot") item.setAttribute('class', 'hidden');
 				var checkbox = item.appendChild(document.createElement('input'));
 				var colorCode = item.appendChild(document.createElement('div'));
 				var label = item.appendChild(document.createElement('label'));
@@ -397,7 +397,11 @@ $(document).ready(function () {
 				colorCode.style.background = projectTypeAttributes[types[i]].color;
 				checkbox.type = 'checkbox';
 				checkbox.id = types[i];
-				checkbox.checked = true;
+				if (types[i] == "Water Initiative" || types[i] == "Utility" || types[i] == "Waste Reduction Pilot"){
+					checkbox.checked = false;
+				} else {
+					checkbox.checked = true;
+				}
 
 				label.innerHTML = '&nbsp;' + types[i];
 				label.setAttribute('for', types[i]);
@@ -765,7 +769,7 @@ function filter_dt_column(dtable, col, control) {
 	var strSelectedVals = aryCheckVals.join('|');
 	strSelectedVals = strSelectedVals.replace(/\./g, "\\.");
 	
-    //console.log(strSelectedVals);
+    console.log(strSelectedVals);
 	//console.log(dtable.column(col).header()); //this will help find the correct header index defined in objColumn
 	dtable.column(col)
 		//.search( val ? strSelectedVals : val, true, false )
@@ -826,6 +830,11 @@ var projectTypeAttributes = {
 	},
 	'Water Initiative': {
 		color: '#48cae4', //lt blue
+		desc: '', icon: '',
+		size: 'small'
+	},
+	'Waste Reduction Pilot': {
+		color: '#fff', //white
 		desc: '', icon: '',
 		size: 'small'
 	},
