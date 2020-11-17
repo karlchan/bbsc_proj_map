@@ -49,7 +49,7 @@ function shorten(str, maxLen, separator) {
 $(document).ready(function () {
 
 	//Local file;
-	var jsonRaw = 'bbsc-partner-json_20201026.json';
+	var jsonRaw = 'bbsc-partner-map.json';
 	//remote up to date file, doesn't work from local environment due to CORS policy (save to local machine and point to that)
 	//var jsonRaw = 'https://betterbuildingssolutioncenter.energy.gov/sites/default/files/bbsc-partner-map.json';
 	$.getJSON(jsonRaw, function (data) {
@@ -84,7 +84,10 @@ $(document).ready(function () {
 						var strPTitle = '';
 						switch (data.content_type) {
 							case 'Partner Profile':
-								strPTitle = '<a href="../node/' + data.nid + '"  target="_parent">' + data.title + '</a>';
+								strPTitle = data.title;
+							    if (data.hide_link != "Yes"){
+									strPTitle = '<a href="../node/' + data.nid + '"  target="_parent">' + data.title + '</a>';
+								}
 								break;
 							case 'Showcase Project':
 								strPTitle = data.sp_partner + '<br/><a href="../node/' + data.nid + '"  target="_parent">' + data.title + '</a>';
@@ -119,6 +122,7 @@ $(document).ready(function () {
 				{ "data": "summary" },
 				{ "data": "sp_partner" },
 				{ "data": "nid" },
+				{ "data": "hide_link" },
 			],
 			"columnDefs": [
 				{
@@ -180,6 +184,11 @@ $(document).ready(function () {
 				{
 					"targets": [13],
 					"title": "nid",
+					"visible": false	
+				},
+				{
+					"targets": [14],
+					"title": "hide_link",
 					"visible": false	
 				},
 				
@@ -443,8 +452,12 @@ $(document).ready(function () {
 				if (layer.feature.properties.content_type == 'Showcase Project'){
 					linkProject_Title =  layer.feature.properties.sp_partner + '<br/>';
 				}
-				linkProject_Title += '<a href="../node/' + layer.feature.properties.nid + '" target="_blank">' + layer.feature.properties.title + '<\/a>';
-				
+				if (layer.feature.properties.hide_link != "Yes"){
+					linkProject_Title += '<a href="../node/' + layer.feature.properties.nid + '" target="_blank">' + layer.feature.properties.title + '<\/a>';
+				}
+				else
+					linkProject_Title += layer.feature.properties.title;
+
 				var strSector = layer.feature.properties.sector;
 				
 				var strBuildingType = '';
@@ -480,15 +493,17 @@ $(document).ready(function () {
 						strDescription = '';
 						break;
 				}
-		
+
+				var strProfileLink = '';
+				if (layer.feature.properties.hide_link != "Yes")
+					strProfileLink = '<a href="../node/'+ layer.feature.properties.nid +'">View full profile</a>';
 				
 				var content = '<div class="project_title">' + linkProject_Title + '<\/div>' +
 						'<div class="partner_location">' + strContentType +' ('+ citystate + ')<\/div><hr\/>' +
 						'<div class="callout_label">Sector(s): <\/div>' + strSector + 
 						strBuildingType + '<hr\/>' +
 						'<img style="padding:0px 0px 10px 10px; float:right;" src="' + strLogo + '"\/>' +
-						strDescription +
-						'<a href="../node/'+ layer.feature.properties.nid +'">View full profile</a>';
+						strDescription + strProfileLink;
 
 				layer.bindPopup(content);
 
@@ -582,8 +597,8 @@ function format(d) {
 		}
 
 	
-	
-	strReturnString += '<br/><a href="../node/' + d.nid + '">View more details</a>';
+		if (d.hide_link != "Yes")
+			strReturnString += '<br/><a href="../node/' + d.nid + '">View more details</a>';
 	
 	//lookup marker in global marker array by nid. Then use the leaflet_id to open the popup. 
 	var target = clusterGroup.getLayer(objMarkers[d.nid]._leaflet_id)
