@@ -411,6 +411,11 @@ $handler->display->display_options['fields']['field_partner']['label'] = 'sp_par
 $handler->display->display_options['fields']['field_partner']['link_to_entity'] = 0;
 $handler->display->display_options['fields']['field_partner']['view_mode'] = 'full';
 $handler->display->display_options['fields']['field_partner']['bypass_access'] = 0;
+/* Field: Indexed Content: Only show on Partner List */
+$handler->display->display_options['fields']['field_exclude_from_partner_profi']['id'] = 'field_exclude_from_partner_profi';
+$handler->display->display_options['fields']['field_exclude_from_partner_profi']['table'] = 'search_api_index_sidebar_facet_index';
+$handler->display->display_options['fields']['field_exclude_from_partner_profi']['field'] = 'field_exclude_from_partner_profi';
+$handler->display->display_options['fields']['field_exclude_from_partner_profi']['label'] = 'hide_link';
 $handler->display->display_options['defaults']['filter_groups'] = FALSE;
 $handler->display->display_options['defaults']['filters'] = FALSE;
 /* Filter criterion: Indexed Content: Status */

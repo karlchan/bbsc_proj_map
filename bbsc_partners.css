@@ -125,6 +125,7 @@ body {
 
 .leaflet-popup-content {
     font-size: 110%;
+    min-height: 215px;
 }
 
     .leaflet-popup-content h3 {
