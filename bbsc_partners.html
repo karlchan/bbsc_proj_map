@@ -48,9 +48,10 @@ function shorten(str, maxLen, separator) {
 
 $(document).ready(function () {
 
-	//var dataFilePath = 'bbsc-partner-json_20201001.csv';
+	//Local file;
 	var jsonRaw = 'bbsc-partner-json_20201026.json';
-	//var jsonRaw = 'https://www6.eere.energy.gov/bbsc/bbsc-partner-json';
+	//remote up to date file, doesn't work from local environment due to CORS policy (save to local machine and point to that)
+	//var jsonRaw = 'https://betterbuildingssolutioncenter.energy.gov/sites/default/files/bbsc-partner-map.json';
 	$.getJSON(jsonRaw, function (data) {
 	
 		//console.log(data);
